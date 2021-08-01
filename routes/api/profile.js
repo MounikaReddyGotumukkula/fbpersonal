@@ -53,7 +53,123 @@ router.get("/all", (req, res) => {
     })
     .catch((err) => res.status(404).json(err));
 });
+//@route  POST  api/profile/users/:user_id/follow
+//@desc   Add user to current user's 'following' list & current profile's 'follower' list
+//@access Private
 
+router.post(
+  '/users/:user_id/follow', 
+  passport.authenticate('jwt', { session: false }), (req, res) => {
+    const errors = {};
+Profile.findOne({user: req.params.user_id})
+    .then(profile =>{
+   Profile.findOne({user: req.user.id})
+      .then((profile) => {
+        if (!profile)
+        res.status(404).json({ profilenotfound: 'Cannot find your profile' });
+
+        if(profile.following.filter((following) => following.user_id.toString() === req.params.user_id).length > 0)
+        return res.status(400).json({alreadyfollowing:'User is already following this user'});
+        
+        profile.following.unshift({user_id: req.params.user_id});
+        profile.save().then((profile) => res.json(profile)); 
+
+      Profile.findOne({user: req.params.user_id})
+        .then(profile =>{
+          profile.followers.unshift({user_id: req.user.id });
+          profile.save().then((profile) => console.log(profile));
+        })
+    })
+      .catch(err => res.status(404).json({profilenotfound: 'Cannot find your profile'}));
+    })
+    .catch(err => console.log(err));
+  }
+)
+
+// @route  POST  api/profile/user/:user_id/unfollow
+// @desc   Remove user from current user's 'following' list & current profile's 'followers' list
+// @access Private
+// @route  DELETE  api/profile/user/:user_id/unfollow
+// @desc   Remove user from current user's 'following' list
+// @access Private
+router.delete(
+  "/user/:user_id/unfollow",
+  passport.authenticate("jwt", { session: false }),
+  (req, res) => {
+    const errors = {};
+
+    Profile.findOne({ user: req.params.user_id })
+      .then((profile) => {
+        Profile.findOne({ user: req.user.id })
+          .then((profile) => {
+            if (!profile)
+              res
+                .status(404)
+                .json({ profilenotfound: "Cannot find your profile" });
+
+            if (
+              profile.following.filter(
+                (following) =>
+                  following.user_id.toString() === req.params.user_id
+              ).length === 0
+            ) {
+              return res.status(400).json({
+                notfollowing: "Cannot unfollow user you are not following",
+              });
+            }
+
+            const removeIndex = profile.following
+              .map((item) => item.user_id.toString())
+              .indexOf(req.params.user_id);
+            profile.following.splice(removeIndex, 1);
+            profile.save()
+            .then((profile) => res.json(profile));
+          })
+          .catch((err) =>
+            res
+              .status(404)
+              .json({ profilenotfound: "Cannot find your profile" })
+          );
+      })
+      .catch((err) => console.log(err));
+
+      Profile.findOne({ user: req.user.id })
+      .then((profile) => {
+        Profile.findOne({ user: req.params.user_id })
+          .then((profile) => {
+            if (!profile)
+              res
+                .status(404)
+                .json({ profilenotfound: "Cannot find this profile" });
+
+            if (
+              profile.followers.filter(
+                (followers) =>
+                  followers.user_id.toString() === req.user.id
+              ).length === 0
+            ) {
+              return res.status(400).json({
+                notfollowing: "Cannot remove from followers",
+              });
+            }
+
+            const removeIndex = profile.followers
+              .map((item) => item.user_id.toString())
+              .indexOf(req.user.id);
+            profile.followers.splice(removeIndex, 1);
+            profile.save()
+              .then((profile) => res.json(profile))
+              .catch((err) => console.log(err));
+          })
+          .catch((err) =>
+            res
+              .status(404)
+              .json({ profilenotfound: "Cannot find this profile" })
+          );
+      })
+      .catch((err) => console.log(err));
+  }
+);
 // @route   GET api/profile/user/:user_id
 // @desc    Get profile by user ID
 // @access  Public
