@@ -63,7 +63,7 @@ router.post(
     const errors = {};
 Profile.findOne({user: req.params.user_id})
     .then(profile =>{
-   Profile.findOne({user: req.user.id})
+   Profile.findOne({user: req.user_id})
       .then((profile) => {
         if (!profile)
         res.status(404).json({ profilenotfound: '**Cannot find your profile**' });
