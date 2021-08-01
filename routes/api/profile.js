@@ -66,7 +66,7 @@ Profile.findOne({user: req.params.user_id})
    Profile.findOne({user: req.user.id})
       .then((profile) => {
         if (!profile)
-        res.status(404).json({ profilenotfound: 'Cannot find your profile' });
+        res.status(404).json({ profilenotfound: '**Cannot find your profile**' });
 
         if(profile.following.filter((following) => following.user_id.toString() === req.params.user_id).length > 0)
         return res.status(400).json({alreadyfollowing:'User is already following this user'});
