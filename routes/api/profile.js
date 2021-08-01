@@ -58,7 +58,7 @@ router.get("/all", (req, res) => {
 //@access Private
 
 router.post(
-  '/users/:user_id/follow', 
+  '/user/:user_id/follow', 
   passport.authenticate('jwt', { session: false }), (req, res) => {
     const errors = {};
 Profile.findOne({user: req.params.user_id})
